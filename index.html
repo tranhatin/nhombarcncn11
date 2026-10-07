@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhóm Bar - Quản Lý Bài Tập & Tài Liệu Môn Công Nghệ 11</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: MedievalSharp & Cinzel & Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=MedievalSharp&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tavern: {
+                            dark: '#120804',
+                            wood: '#2d1b0e',
+                            woodLight: '#422817',
+                            board: '#3a2213',
+                            parchment: '#f4e4bc',
+                            parchmentDark: '#e3cc96',
+                            gold: '#d4af37',
+                            goldHover: '#f3c63f',
+                            ruby: '#8b0000',
+                            crimson: '#660000',
+                            textDark: '#2c1808'
+                        }
+                    },
+                    fontFamily: {
+                        medieval: ['MedievalSharp', 'cursive'],
+                        cinzel: ['Cinzel', 'serif'],
+                        sans: ['Nunito', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #120804;
+            background-image: radial-gradient(#2d1b0e 1px, transparent 0);
+            background-size: 24px 24px;
+            color: #f4e4bc;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.8)); }
+            25% { opacity: 0.8; filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.5)); }
+            50% { opacity: 0.95; filter: drop-shadow(0 0 16px rgba(255, 140, 0, 0.9)); }
+            75% { opacity: 0.85; filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.6)); }
+        }
+
+        .candle-flame {
+            animation: flicker 2s infinite ease-in-out;
+        }
+
+        .parchment-card {
+            background: #f4e4bc;
+            background-image: radial-gradient(#e3cc96 15%, transparent 16%);
+            background-size: 16px 16px;
+            color: #2c1808;
+            box-shadow: inset 0 0 30px rgba(66, 40, 23, 0.5), 0 10px 20px rgba(0,0,0,0.6);
+            border: 8px solid #422817;
+            border-image: linear-gradient(to bottom right, #5c3a21, #2d1b0e, #5c3a21) 1;
+        }
+
+        .wooden-panel {
+            background: #2d1b0e;
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2px, transparent 2px, transparent 4px);
+            border: 4px solid #422817;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7), inset 0 1px 3px rgba(255, 255, 255, 0.1);
+        }
+
+        .medieval-btn {
+            background: linear-gradient(180deg, #d4af37 0%, #997a15 100%);
+            color: #1a0c06;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+            border: 2px solid #5c450a;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+            transition: all 0.2s ease;
+        }
+
+        .medieval-btn:hover {
+            background: linear-gradient(180deg, #f3c63f 0%, #b8931d 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.3);
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1a0c06;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #422817;
+            border: 2px solid #2d1b0e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+
+        .tab-btn.active {
+            background-color: #d4af37;
+            color: #1a0c06;
+            font-weight: bold;
+            border-bottom: 4px solid #8b0000;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <header class="wooden-panel border-b-4 border-tavern-gold sticky top-0 z-40 px-4 py-3 shadow-2xl">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <!-- Logo & Group Name -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
+                <!-- SVG Medieval Shield Logo -->
+                <div class="relative w-12 h-14 flex-shrink-0 candle-flame">
+                    <svg viewBox="0 0 100 120" class="w-full h-full drop-shadow-lg">
+                        <!-- Shield Outer Frame -->
+                        <path d="M50 5 L90 20 L85 80 L50 115 L15 80 L10 20 Z" fill="#2d1b0e" stroke="#d4af37" stroke-width="6" />
+                        <!-- Shield Inner Backing -->
+                        <path d="M50 12 L82 25 L78 75 L50 105 L22 75 L18 25 Z" fill="#422817" stroke="#8b0000" stroke-width="3" />
+                        <!-- Clinking Beer Mugs (SVG Icon Details) -->
+                        <g fill="#d4af37">
+                            <!-- Left Mug -->
+                            <rect x="28" y="45" width="20" height="28" rx="3" fill="#f4e4bc" stroke="#2d1b0e" stroke-width="2"/>
+                            <path d="M23 52 C 18 52, 18 66, 23 66" fill="none" stroke="#f4e4bc" stroke-width="3"/>
+                            <!-- Right Mug -->
+                            <rect x="52" y="45" width="20" height="28" rx="3" fill="#f4e4bc" stroke="#2d1b0e" stroke-width="2"/>
+                            <path d="M77 52 C 82 52, 82 66, 77 66" fill="none" stroke="#f4e4bc" stroke-width="3"/>
+                            <!-- Foam Top -->
+                            <path d="M26 43 C 26 37, 50 37, 50 43 C 50 37, 74 37, 74 43 Z" fill="#ffffff"/>
+                            <!-- Clink Sparks -->
+                            <circle cx="50" cy="35" r="3" fill="#f3c63f"/>
+                            <path d="M45 30 L55 40 M55 30 L45 40" stroke="#f3c63f" stroke-width="2"/>
+                        </g>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-medieval font-black text-3xl md:text-4xl text-tavern-gold tracking-wider drop-shadow-md">NHÓM BAR</h1>
+                    <p class="font-cinzel text-xs text-amber-200/80">Quản Lý Bài Tập & Tài Liệu Công Nghệ 11</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex flex-wrap justify-center gap-1.5 bg-tavern-dark/80 p-1.5 rounded-lg border border-amber-900/50">
+                <button onclick="switchTab('home')" id="tab-home" class="tab-btn active px-3.5 py-2 rounded font-cinzel text-xs md:text-sm flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-house-chimney text-amber-600"></i> Trang Chủ
+                </button>
+                <button onclick="switchTab('members')" id="tab-members" class="tab-btn px-3.5 py-2 rounded font-cinzel text-xs md:text-sm text-amber-200 hover:text-tavern-gold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-users text-amber-600"></i> Thành Viên
+                </button>
+                <button onclick="switchTab('docs')" id="tab-docs" class="tab-btn px-3.5 py-2 rounded font-cinzel text-xs md:text-sm text-amber-200 hover:text-tavern-gold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-bookmark text-amber-600"></i> Tài Liệu CN11
+                </button>
+                <button onclick="switchTab('assignments')" id="tab-assignments" class="tab-btn px-3.5 py-2 rounded font-cinzel text-xs md:text-sm text-amber-200 hover:text-tavern-gold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-upload text-amber-600"></i> Nộp Bài Tập
+                </button>
+                <button onclick="switchTab('announcements')" id="tab-announcements" class="tab-btn px-3.5 py-2 rounded font-cinzel text-xs md:text-sm text-amber-200 hover:text-tavern-gold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-bullhorn text-amber-600"></i> Thông Báo
+                </button>
+            </nav>
+
+            <!-- Sound Control -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleAudio()" id="audio-btn" class="px-3 py-1.5 rounded bg-tavern-woodLight border border-amber-800 text-xs font-sans text-amber-300 hover:border-tavern-gold transition flex items-center gap-2">
+                    <i class="fa-solid fa-volume-high" id="audio-icon"></i>
+                    <span id="audio-status">Âm thanh: Bật</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full p-4 md:p-6 flex-grow">
+
+        <!-- SECTION 1: HOME DASHBOARD -->
+        <section id="section-home" class="space-y-6">
+            
+            <!-- Hero Banner -->
+            <div class="parchment-card p-6 md:p-8 rounded-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-3 z-10 max-w-2xl">
+                    <span class="px-3 py-1 bg-amber-900 text-amber-100 text-xs font-bold uppercase rounded-full tracking-wider shadow">
+                        Hệ Thống Quản Lý Nhóm Học Tập
+                    </span>
+                    <h2 class="font-medieval text-3xl md:text-5xl text-amber-950 font-extrabold leading-tight">
+                        Chào Mừng Đến Với Nhóm Bar!
+                    </h2>
+                    <p class="text-sm md:text-base text-amber-900 leading-relaxed font-sans">
+                        Nơi tổng hợp thông tin thành viên, chia sẻ tài liệu học tập và nộp bài tập cho môn <strong>Công Nghệ Công Nghiệp 11</strong>.
+                    </p>
+                    <div class="flex flex-wrap gap-3 pt-2">
+                        <button onclick="switchTab('assignments')" class="medieval-btn px-5 py-2.5 rounded-lg text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-file-arrow-up"></i> Nộp Bài Tập Ngay
+                        </button>
+                        <button onclick="switchTab('docs')" class="px-5 py-2.5 rounded-lg text-sm font-bold bg-amber-900 text-amber-100 hover:bg-amber-800 transition flex items-center gap-2 border border-amber-950 font-cinzel">
+                            <i class="fa-solid fa-folder-open"></i> Xem Tài Liệu CN11
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Detailed SVG Shield Crest for Banner -->
+                <div class="relative flex-shrink-0 text-center">
+                    <div class="w-40 h-48 rounded-xl border-4 border-amber-900 bg-amber-950/30 flex items-center justify-center shadow-2xl p-2 relative">
+                        <svg viewBox="0 0 100 120" class="w-full h-full drop-shadow-2xl candle-flame">
+                            <path d="M50 5 L90 20 L85 80 L50 115 L15 80 L10 20 Z" fill="#2d1b0e" stroke="#d4af37" stroke-width="5" />
+                            <path d="M50 12 L82 25 L78 75 L50 105 L22 75 L18 25 Z" fill="#422817" stroke="#8b0000" stroke-width="2" />
+                            <g fill="#d4af37">
+                                <rect x="26" y="45" width="22" height="30" rx="3" fill="#f4e4bc" stroke="#2d1b0e" stroke-width="2"/>
+                                <path d="M20 53 C 14 53, 14 68, 20 68" fill="none" stroke="#f4e4bc" stroke-width="3"/>
+                                <rect x="52" y="45" width="22" height="30" rx="3" fill="#f4e4bc" stroke="#2d1b0e" stroke-width="2"/>
+                                <path d="M79 53 C 85 53, 85 68, 79 68" fill="none" stroke="#f4e4bc" stroke-width="3"/>
+                                <path d="M24 43 C 24 35, 50 35, 50 43 C 50 35, 76 35, 76 43 Z" fill="#ffffff"/>
+                                <circle cx="50" cy="33" r="4" fill="#f3c63f"/>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Overview Widgets -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="wooden-panel p-4 rounded-xl flex items-center gap-4 hover:border-tavern-gold transition">
+                    <div class="w-12 h-12 rounded-lg bg-amber-900/40 border border-amber-700 flex items-center justify-center text-tavern-gold text-2xl">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <div>
+                        <span class="block text-2xl font-bold font-medieval text-amber-100" id="stat-members">0</span>
+                        <span class="text-xs text-amber-300/80">Thành viên nhóm</span>
+                    </div>
+                </div>
+
+                <div class="wooden-panel p-4 rounded-xl flex items-center gap-4 hover:border-tavern-gold transition">
+                    <div class="w-12 h-12 rounded-lg bg-amber-900/40 border border-amber-700 flex items-center justify-center text-emerald-400 text-2xl">
+                        <i class="fa-solid fa-file-circle-check"></i>
+                    </div>
+                    <div>
+                        <span class="block text-2xl font-bold font-medieval text-amber-100" id="stat-assignments">0</span>
+                        <span class="text-xs text-amber-300/80">Bài tập đã nộp</span>
+                    </div>
+                </div>
+
+                <div class="wooden-panel p-4 rounded-xl flex items-center gap-4 hover:border-tavern-gold transition">
+                    <div class="w-12 h-12 rounded-lg bg-amber-900/40 border border-amber-700 flex items-center justify-center text-amber-400 text-2xl">
+                        <i class="fa-solid fa-book"></i>
+                    </div>
+                    <div>
+                        <span class="block text-2xl font-bold font-medieval text-amber-100" id="stat-docs">0</span>
+                        <span class="text-xs text-amber-300/80">Tài liệu học tập</span>
+                    </div>
+                </div>
+
+                <div class="wooden-panel p-4 rounded-xl flex items-center gap-4 hover:border-tavern-gold transition">
+                    <div class="w-12 h-12 rounded-lg bg-amber-900/40 border border-amber-700 flex items-center justify-center text-rose-400 text-2xl">
+                        <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <div>
+                        <span class="block text-2xl font-bold font-medieval text-amber-100" id="stat-announcements">0</span>
+                        <span class="text-xs text-amber-300/80">Thông báo mới</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Home Details Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Pinned Announcement Widget -->
+                    <div class="wooden-panel p-5 rounded-xl space-y-4">
+                        <div class="flex justify-between items-center border-b border-amber-900/60 pb-3">
+                            <h3 class="font-medieval text-2xl text-tavern-gold font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-bullhorn text-amber-500"></i> Thông Báo Mới Nhất
+                            </h3>
+                            <button onclick="switchTab('announcements')" class="text-xs text-amber-300 hover:underline">
+                                Xem tất cả <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
+                        </div>
+                        <div id="home-pinned-announcement" class="space-y-2">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Tiles -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div onclick="openModal('member-modal')" class="parchment-card p-4 rounded-lg text-center space-y-2 cursor-pointer hover:scale-105 transition transform">
+                            <i class="fa-solid fa-user-plus text-3xl text-amber-950"></i>
+                            <h4 class="font-bold text-amber-950 text-sm font-cinzel">Thêm Thành Viên</h4>
+                            <p class="text-[11px] text-amber-900">Thêm người mới vào Nhóm Bar</p>
+                        </div>
+                        <div onclick="openModal('doc-modal')" class="parchment-card p-4 rounded-lg text-center space-y-2 cursor-pointer hover:scale-105 transition transform">
+                            <i class="fa-solid fa-file-circle-plus text-3xl text-amber-950"></i>
+                            <h4 class="font-bold text-amber-950 text-sm font-cinzel">Thêm Tài Liệu</h4>
+                            <p class="text-[11px] text-amber-900">Tải lên bài học môn Công Nghệ 11</p>
+                        </div>
+                        <div onclick="openModal('announcement-modal')" class="parchment-card p-4 rounded-lg text-center space-y-2 cursor-pointer hover:scale-105 transition transform">
+                            <i class="fa-solid fa-pen-to-square text-3xl text-amber-950"></i>
+                            <h4 class="font-bold text-amber-950 text-sm font-cinzel">Tạo Thông Báo</h4>
+                            <p class="text-[11px] text-amber-900">Đăng lịch họp hoặc tin nhắn nhóm</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Recent Submissions Feed -->
+                    <div class="wooden-panel p-5 rounded-xl space-y-4">
+                        <div class="flex justify-between items-center border-b border-amber-900/60 pb-3">
+                            <h3 class="font-medieval text-xl text-tavern-gold font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-amber-500"></i> Bài Nộp Mới Gần Đây
+                            </h3>
+                            <button onclick="switchTab('assignments')" class="text-xs text-amber-300 hover:underline">
+                                Xem tất cả
+                            </button>
+                        </div>
+                        <div id="home-recent-assignments" class="space-y-3">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+
+                    <!-- Guidelines -->
+                    <div class="parchment-card p-5 rounded-xl space-y-3">
+                        <h3 class="font-bold text-lg text-amber-950 border-b border-amber-900/30 pb-2 flex items-center gap-2 font-cinzel">
+                            <i class="fa-solid fa-circle-info"></i> Quy Định Học Tập Nhóm Bar
+                        </h3>
+                        <ul class="text-xs text-amber-950 space-y-2 list-disc list-inside font-sans">
+                            <li>Nộp bài tập đúng thời hạn đã thông báo.</li>
+                            <li>Đính kèm đúng link Google Drive/Canva hoặc file rõ ràng.</li>
+                            <li>Trao đổi hỗ trợ lẫn nhau trong các bài tập Công Nghệ 11.</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="section-members" class="space-y-6 hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-tavern-wood/90 p-4 rounded-xl border border-amber-900/60 shadow-lg">
+                <div>
+                    <h2 class="font-medieval text-3xl text-tavern-gold font-bold flex items-center gap-3">
+                        <i class="fa-solid fa-users text-amber-500"></i> Thành Viên Nhóm Bar
+                    </h2>
+                    <p class="text-xs md:text-sm text-amber-200/70 mt-1">Danh sách thông tin các thành viên trong nhóm.</p>
+                </div>
+                <button onclick="openModal('member-modal')" class="medieval-btn px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> Thêm Thành Viên Mới
+                </button>
+            </div>
+
+            <div id="members-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Dynamic Content injected by JS -->
+            </div>
+        </section>
+
+        <section id="section-docs" class="space-y-6 hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-tavern-wood/90 p-4 rounded-xl border border-amber-900/60 shadow-lg">
+                <div>
+                    <h2 class="font-medieval text-3xl text-tavern-gold font-bold flex items-center gap-3">
+                        <i class="fa-solid fa-book text-amber-500"></i> Tài Liệu Môn Công Nghệ 11
+                    </h2>
+                    <p class="text-xs md:text-sm text-amber-200/70 mt-1">Nơi lưu trữ tài liệu, đề bài và bản vẽ kỹ thuật dùng chung cho nhóm.</p>
+                </div>
+                <button onclick="openModal('doc-modal')" class="medieval-btn px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-file-circle-plus"></i> Thêm Tài Liệu Mới
+                </button>
+            </div>
+
+            <div id="docs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic Content injected by JS -->
+            </div>
+        </section>
+
+        <section id="section-assignments" class="space-y-6 hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Assignment Form -->
+                <div class="lg:col-span-1">
+                    <div class="parchment-card p-5 rounded-lg space-y-4 sticky top-24">
+                        <div class="border-b-2 border-amber-900/40 pb-3 flex items-center gap-2">
+                            <i class="fa-solid fa-upload text-2xl text-amber-900"></i>
+                            <h3 class="font-medieval text-2xl text-tavern-textDark">Nộp Bài Tập</h3>
+                        </div>
+
+                        <form id="submit-assignment-form" onsubmit="handleAssignmentSubmit(event)" class="space-y-3 font-sans">
+                            <div>
+                                <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Tên Thành Viên *</label>
+                                <select id="assign-member" required class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                                    <option value="">-- Chọn tên của bạn --</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Tên Bài Tập *</label>
+                                <input type="text" id="assign-title" required placeholder="Ví dụ: Bài 2 - Hình chiếu vuông góc..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Hình Thức Nộp *</label>
+                                <select id="assign-type" onchange="toggleSubmissionInput()" required class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                                    <option value="link">Đường dẫn Link (Google Drive, Canva, Docs...)</option>
+                                    <option value="file">Đính kèm File (Tên tệp / Tải lên)</option>
+                                </select>
+                            </div>
+
+                            <div id="assign-link-container">
+                                <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Link Bài Làm *</label>
+                                <input type="url" id="assign-link" placeholder="https://drive.google.com/..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                            </div>
+
+                            <div id="assign-file-container" class="hidden">
+                                <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Chọn File Hoặc Nhập Tên File *</label>
+                                <input type="file" id="assign-file-input" onchange="handleFileSelect(event)" class="w-full text-xs text-amber-950 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-amber-900 file:text-amber-100 hover:file:bg-amber-800">
+                                <input type="text" id="assign-file-name" placeholder="Tên tệp tin đính kèm..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800 mt-2">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Ghi Chú</label>
+                                <textarea id="assign-notes" rows="2" placeholder="Ghi chú thêm cho nhóm..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800"></textarea>
+                            </div>
+
+                            <button type="submit" class="w-full medieval-btn py-2.5 rounded-lg text-sm mt-2 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-paper-plane"></i> Gửi Bài Tập
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Assignment List -->
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-tavern-wood/90 p-4 rounded-xl border border-amber-900/60 shadow-lg">
+                        <h3 class="font-medieval text-2xl text-tavern-gold font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-folder-closed text-amber-500"></i> Danh Sách Bài Tập Đã Nộp
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-amber-300">Lọc theo thành viên:</label>
+                            <select id="filter-assignment-member" onchange="renderAssignments()" class="bg-tavern-dark text-amber-200 border border-amber-800 text-xs rounded px-2 py-1 focus:outline-none">
+                                <option value="ALL">Tất cả thành viên</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="assignments-list" class="space-y-4">
+                        <!-- Dynamic Content Injected by JS -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <section id="section-announcements" class="space-y-6 hidden">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-tavern-wood/90 p-4 rounded-xl border border-amber-900/60 shadow-lg">
+                <div>
+                    <h2 class="font-medieval text-3xl text-tavern-gold font-bold flex items-center gap-3">
+                        <i class="fa-solid fa-bullhorn text-amber-500"></i> Bảng Thông Báo Nhóm
+                    </h2>
+                    <p class="text-xs md:text-sm text-amber-200/70 mt-1">Nơi trao đổi thông tin, thông báo lịch họp và nhắc nhở thời hạn.</p>
+                </div>
+                <button onclick="openModal('announcement-modal')" class="medieval-btn px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> Đăng Thông Báo Mới
+                </button>
+            </div>
+
+            <div id="announcements-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dynamic Content injected by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="wooden-panel border-t-4 border-tavern-woodLight py-6 mt-12 text-center text-xs text-amber-400/60">
+        <div class="max-w-7xl mx-auto px-4 space-y-2">
+            <p class="font-medieval text-lg text-tavern-gold font-bold">NHÓM BAR - HỌC TẬP & PHÁT TRIỂN</p>
+            <p>© 2026 Môn Công Nghệ Công Nghiệp 11 - Dữ liệu tự động lưu trên LocalStorage.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: THÊM THÀNH VIÊN -->
+    <div id="member-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="parchment-card w-full max-w-md p-6 rounded-xl relative space-y-4">
+            <button onclick="closeModal('member-modal')" class="absolute top-3 right-3 text-amber-950 hover:text-red-700 text-xl font-bold">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="font-medieval text-2xl text-amber-950 border-b-2 border-amber-900/40 pb-2">Thêm Thành Viên Mới</h3>
+            
+            <form onsubmit="handleAddMember(event)" class="space-y-3 font-sans">
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Họ và Tên *</label>
+                    <input type="text" id="member-name" required placeholder="Nhập tên thành viên..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Chức Vụ *</label>
+                    <select id="member-role" required class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                        <option value="Trưởng Nhóm">Trưởng Nhóm</option>
+                        <option value="Phó Nhóm">Phó Nhóm</option>
+                        <option value="Thành Viên">Thành Viên</option>
+                        <option value="Thư Ký Nhóm">Thư Ký Nhóm</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Link Ảnh Đại Diện (URL)</label>
+                    <input type="url" id="member-avatar" placeholder="https://... (Để trống để dùng ảnh tự động)" class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Mục Tiêu / Ghi Chú</label>
+                    <input type="text" id="member-quote" placeholder="Ví dụ: Quyết tâm điểm cao môn Công Nghệ 11!" class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('member-modal')" class="px-4 py-2 rounded text-xs font-bold text-amber-900 hover:bg-amber-900/10">Hủy</button>
+                    <button type="submit" class="medieval-btn px-4 py-2 rounded text-xs">Lưu Thành Viên</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: THÊM TÀI LIỆU -->
+    <div id="doc-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="parchment-card w-full max-w-md p-6 rounded-xl relative space-y-4">
+            <button onclick="closeModal('doc-modal')" class="absolute top-3 right-3 text-amber-950 hover:text-red-700 text-xl font-bold">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="font-medieval text-2xl text-amber-950 border-b-2 border-amber-900/40 pb-2">Thêm Tài Liệu Mới</h3>
+            
+            <form onsubmit="handleAddDoc(event)" class="space-y-3 font-sans">
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Tên Tài Liệu *</label>
+                    <input type="text" id="doc-title" required placeholder="Bài 4: Bản vẽ cơ khí..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Mô Tả Tài Liệu *</label>
+                    <textarea id="doc-desc" required rows="2" placeholder="Tóm tắt ngắn gọn nội dung tài liệu..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Link Đính Kèm *</label>
+                    <input type="url" id="doc-link" required placeholder="https://drive.google.com/..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Phân Loại</label>
+                    <select id="doc-category" class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                        <option value="SGK & Lý Thuyết">SGK & Lý Thuyết</option>
+                        <option value="Bản Vẽ & Thực Hành">Bản Vẽ & Thực Hành</option>
+                        <option value="Đề Ôn & Cẩm Nang">Đề Ôn & Cẩm Nang</option>
+                    </select>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('doc-modal')" class="px-4 py-2 rounded text-xs font-bold text-amber-900 hover:bg-amber-900/10">Hủy</button>
+                    <button type="submit" class="medieval-btn px-4 py-2 rounded text-xs">Thêm Tài Liệu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: THÊM THÔNG BÁO -->
+    <div id="announcement-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="parchment-card w-full max-w-md p-6 rounded-xl relative space-y-4">
+            <button onclick="closeModal('announcement-modal')" class="absolute top-3 right-3 text-amber-950 hover:text-red-700 text-xl font-bold">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="font-medieval text-2xl text-amber-950 border-b-2 border-amber-900/40 pb-2">Tạo Thông Báo Mới</h3>
+            
+            <form onsubmit="handleAddAnnouncement(event)" class="space-y-3 font-sans">
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Tiêu Đề Thông Báo *</label>
+                    <input type="text" id="ann-title" required placeholder="Thông báo họp nhóm, hạn nộp bài..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Người Đăng *</label>
+                    <select id="ann-author" required class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800">
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-amber-950 uppercase mb-1">Nội Dung Thông Báo *</label>
+                    <textarea id="ann-content" required rows="3" placeholder="Viết nội dung thông báo cho nhóm..." class="w-full bg-amber-50 border-2 border-amber-900/40 rounded px-3 py-2 text-sm text-amber-950 focus:outline-none focus:border-amber-800"></textarea>
+                </div>
+
+                <div>
+                    <label class="flex items-center gap-2 text-xs font-bold text-amber-950 cursor-pointer">
+                        <input type="checkbox" id="ann-pinned" class="accent-amber-900 w-4 h-4">
+                        📌 Ghim thông báo này lên đầu trang
+                    </label>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('announcement-modal')" class="px-4 py-2 rounded text-xs font-bold text-amber-900 hover:bg-amber-900/10">Hủy</button>
+                    <button type="submit" class="medieval-btn px-4 py-2 rounded text-xs">Đăng Thông Báo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_MEMBERS = [
+            { id: 'm1', name: 'Nguyễn Văn A', role: 'Trưởng Nhóm', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Arthur', quote: 'Đồng hành cùng Nhóm Bar đạt kết quả tốt nhất!' },
+            { id: 'm2', name: 'Trần Thị B', role: 'Phó Nhóm', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Ginevra', quote: 'Hỗ trợ kiểm tra các bản vẽ kỹ thuật.' },
+            { id: 'm3', name: 'Lê Hoàng C', role: 'Thành Viên', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Lancelot', quote: 'Hoàn thành bài tập đúng hạn.' }
+        ];
+
+        const DEFAULT_DOCS = [
+            { id: 'd1', title: 'Bài 1: Khái niệm về bản vẽ kỹ thuật', category: 'SGK & Lý Thuyết', desc: 'Quy chuẩn khổ giấy (A0-A4), tỷ lệ và các loại nét vẽ theo TCVN môn Công Nghệ 11.', link: 'https://drive.google.com/file/d/sample-bai-1' },
+            { id: 'd2', title: 'Bài 2: Phương pháp hình chiếu vuông góc', category: 'Bản Vẽ & Thực Hành', desc: 'Hướng dẫn vẽ hình chiếu đứng, hình chiếu bằng và hình chiếu cạnh.', link: 'https://drive.google.com/file/d/sample-bai-2' },
+            { id: 'd3', title: 'Bài 3: Bản vẽ chi tiết và bản vẽ lắp', category: 'SGK & Lý Thuyết', desc: 'Các bước đọc bản vẽ chi tiết và quy trình biểu diễn vật thể.', link: 'https://drive.google.com/file/d/sample-bai-3' },
+            { id: 'd4', title: 'Tổng hợp câu hỏi ôn tập Công Nghệ 11', category: 'Đề Ôn & Cẩm Nang', desc: 'Bộ câu hỏi trắc nghiệm và bài tập thực hành giữa kỳ.', link: 'https://drive.google.com/file/d/sample-cam-nang' }
+        ];
+
+        const DEFAULT_ASSIGNMENTS = [
+            { id: 'a1', memberName: 'Nguyễn Văn A', title: 'Bài tập 1: Vẽ khối đa diện', type: 'link', link: 'https://drive.google.com/file/d/123456789', fileName: '', notes: 'Đã vẽ hoàn thiện đúng tỉ lệ.', date: '2026-10-05 14:30' },
+            { id: 'a2', memberName: 'Trần Thị B', title: 'Bài tập 2: Bản vẽ 3 hình chiếu', type: 'file', link: '', fileName: 'BaiTap2_TranThiB.pdf', notes: 'File PDF chứa bài tập vẽ chi tiết.', date: '2026-10-06 09:15' }
+        ];
+
+        const DEFAULT_ANNOUNCEMENTS = [
+            { id: 'an1', title: '📢 Lịch họp nhóm làm bài tập tuần tới', author: 'Nguyễn Văn A', content: 'Chào mọi người, tối thứ 5 lúc 20h00 Nhóm Bar sẽ họp online để chốt nội dung bài tập Công nghệ 11 nhé.', pinned: true, date: '2026-10-06 10:00' },
+            { id: 'an2', title: '⏰ Nhắc nhở hạn nộp bài tập', author: 'Trần Thị B', content: 'Nhắc các thành viên nộp link Google Drive hoặc file trước 23h59 Chủ Nhật này.', pinned: false, date: '2026-10-07 08:30' }
+        ];
+
+        let state = {
+            members: JSON.parse(localStorage.getItem('bar_members')) || DEFAULT_MEMBERS,
+            docs: JSON.parse(localStorage.getItem('bar_docs')) || DEFAULT_DOCS,
+            assignments: JSON.parse(localStorage.getItem('bar_assignments')) || DEFAULT_ASSIGNMENTS,
+            announcements: JSON.parse(localStorage.getItem('bar_announcements')) || DEFAULT_ANNOUNCEMENTS,
+            soundEnabled: true
+        };
+
+        function playAudioEffect(type) {
+            if (!state.soundEnabled) return;
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.08);
+                } else if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.2);
+                }
+            } catch(e) {
+                console.log('Audio error', e);
+            }
+        }
+
+        function toggleAudio() {
+            state.soundEnabled = !state.soundEnabled;
+            const btnText = document.getElementById('audio-status');
+            const btnIcon = document.getElementById('audio-icon');
+            if (state.soundEnabled) {
+                btnText.innerText = "Âm thanh: Bật";
+                btnIcon.className = "fa-solid fa-volume-high";
+                playAudioEffect('success');
+            } else {
+                btnText.innerText = "Âm thanh: Tắt";
+                btnIcon.className = "fa-solid fa-volume-xmark";
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('bar_members', JSON.stringify(state.members));
+            localStorage.setItem('bar_docs', JSON.stringify(state.docs));
+            localStorage.setItem('bar_assignments', JSON.stringify(state.assignments));
+            localStorage.setItem('bar_announcements', JSON.stringify(state.announcements));
+            renderHomeDashboard();
+        }
+
+        function switchTab(tabName) {
+            playAudioEffect('click');
+            const tabs = ['home', 'members', 'docs', 'assignments', 'announcements'];
+            tabs.forEach(t => {
+                document.getElementById(`section-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('active');
+                document.getElementById(`tab-${t}`).classList.add('text-amber-200');
+            });
+
+            document.getElementById(`section-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.add('active');
+            activeBtn.classList.remove('text-amber-200');
+
+            if (tabName === 'home') renderHomeDashboard();
+        }
+
+        function renderHomeDashboard() {
+            document.getElementById('stat-members').innerText = state.members.length;
+            document.getElementById('stat-assignments').innerText = state.assignments.length;
+            document.getElementById('stat-docs').innerText = state.docs.length;
+            document.getElementById('stat-announcements').innerText = state.announcements.length;
+
+            const pinnedContainer = document.getElementById('home-pinned-announcement');
+            const latestAnn = state.announcements.find(a => a.pinned) || state.announcements[0];
+
+            if (latestAnn) {
+                pinnedContainer.innerHTML = `
+                    <div class="bg-tavern-dark/90 p-4 rounded-lg border border-amber-900/50 space-y-2">
+                        <div class="flex justify-between items-start gap-2">
+                            <h4 class="font-bold text-amber-200 text-base">${latestAnn.title}</h4>
+                            ${latestAnn.pinned ? '<span class="text-[10px] bg-red-900 text-amber-100 px-2 py-0.5 rounded uppercase font-bold">📌 Ghim</span>' : ''}
+                        </div>
+                        <p class="text-xs text-amber-100/90 line-clamp-2">${latestAnn.content}</p>
+                        <div class="text-[11px] text-amber-400/60 pt-1 flex justify-between">
+                            <span>Người đăng: <strong>${latestAnn.author}</strong></span>
+                            <span>${latestAnn.date}</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                pinnedContainer.innerHTML = `<p class="text-xs text-amber-300/60 italic">Chưa có thông báo nào.</p>`;
+            }
+
+            const recentContainer = document.getElementById('home-recent-assignments');
+            recentContainer.innerHTML = '';
+
+            const recentList = state.assignments.slice(0, 3);
+            if (recentList.length === 0) {
+                recentContainer.innerHTML = `<p class="text-xs text-amber-300/60 italic">Chưa có bài tập nào được nộp.</p>`;
+            } else {
+                recentList.forEach(a => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-tavern-dark/70 p-3 rounded border border-amber-900/40 text-xs space-y-1';
+                    item.innerHTML = `
+                        <div class="flex justify-between font-bold text-amber-200">
+                            <span>${a.memberName}</span>
+                            <span class="text-[10px] text-emerald-400">✓ Đã nộp</span>
+                        </div>
+                        <div class="text-amber-100/90 truncate">${a.title}</div>
+                        <div class="text-[10px] text-amber-400/50">${a.date}</div>
+                    `;
+                    recentContainer.appendChild(item);
+                });
+            }
+        }
+
+        function renderMembers() {
+            const grid = document.getElementById('members-grid');
+            grid.innerHTML = '';
+
+            state.members.forEach(member => {
+                const card = document.createElement('div');
+                card.className = 'wooden-panel rounded-xl p-5 relative flex flex-col items-center text-center space-y-3 group hover:border-tavern-gold transition duration-300';
+                card.innerHTML = `
+                    <button onclick="deleteMember('${member.id}')" title="Xóa thành viên" class="absolute top-2 right-2 text-amber-700 hover:text-red-500 opacity-0 group-hover:opacity-100 transition">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                    <div class="w-20 h-20 rounded-full border-4 border-tavern-gold bg-tavern-dark overflow-hidden shadow-inner flex items-center justify-center">
+                        <img src="${member.avatar || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(member.name)}" alt="${member.name}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/100x100/2d1b0e/d4af37?text=Avatar'">
+                    </div>
+                    <div>
+                        <h3 class="font-medieval text-xl text-tavern-gold">${member.name}</h3>
+                        <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-900/60 text-amber-200 border border-amber-700/50">
+                            ${member.role}
+                        </span>
+                    </div>
+                    <p class="text-xs text-amber-200/80 italic bg-tavern-dark/60 p-2 rounded w-full border border-amber-950 font-sans">
+                        "${member.quote || 'Cùng cố gắng vì Nhóm Bar!'}"
+                    </p>
+                `;
+                grid.appendChild(card);
+            });
+
+            populateMemberDropdowns();
+        }
+
+        function renderDocs() {
+            const grid = document.getElementById('docs-grid');
+            grid.innerHTML = '';
+
+            state.docs.forEach(doc => {
+                const card = document.createElement('div');
+                card.className = 'parchment-card p-5 rounded-xl space-y-3 relative flex flex-col justify-between';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-amber-900 text-amber-100 rounded">
+                                ${doc.category}
+                            </span>
+                            <button onclick="deleteDoc('${doc.id}')" title="Xóa tài liệu" class="text-amber-900 hover:text-red-700">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                        <h3 class="font-bold text-base text-amber-950 mt-2 font-cinzel">${doc.title}</h3>
+                        <p class="text-xs text-amber-900/90 mt-1 font-sans">${doc.desc}</p>
+                    </div>
+                    <div class="pt-3 border-t border-amber-900/20 flex justify-end">
+                        <a href="${doc.link}" target="_blank" onclick="playAudioEffect('click')" class="medieval-btn px-3 py-1.5 rounded text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Xem Tài Liệu
+                        </a>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderAssignments() {
+            const list = document.getElementById('assignments-list');
+            const filterMember = document.getElementById('filter-assignment-member').value;
+            list.innerHTML = '';
+
+            let filtered = state.assignments;
+            if (filterMember !== 'ALL') {
+                filtered = state.assignments.filter(a => a.memberName === filterMember);
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="wooden-panel p-8 text-center text-amber-300/60 rounded-xl">
+                        <i class="fa-solid fa-folder-open text-4xl mb-2"></i>
+                        <p>Chưa có bài tập nào trong danh mục này.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(assign => {
+                const card = document.createElement('div');
+                card.className = 'wooden-panel p-4 rounded-xl space-y-2 border-l-4 border-l-tavern-gold';
+                
+                const isLink = assign.type === 'link';
+                const submissionContent = isLink 
+                    ? `<a href="${assign.link}" target="_blank" class="text-xs text-amber-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-link"></i> ${assign.link}</a>`
+                    : `<span class="text-xs text-amber-300 flex items-center gap-1"><i class="fa-solid fa-file-arrow-down"></i> Tệp đính kèm: <strong>${assign.fileName || 'Tài liệu'}</strong></span>`;
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <span class="text-xs font-bold text-tavern-gold"><i class="fa-solid fa-user"></i> ${assign.memberName}</span>
+                            <h4 class="font-bold text-base text-amber-100 font-cinzel">${assign.title}</h4>
+                        </div>
+                        <button onclick="deleteAssignment('${assign.id}')" title="Xóa bài nộp" class="text-amber-500 hover:text-red-400">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                    <div class="bg-tavern-dark/80 p-2.5 rounded border border-amber-900/40 space-y-1">
+                        ${submissionContent}
+                        ${assign.notes ? `<p class="text-xs text-amber-200/80 italic mt-1 font-sans">" Ghi chú: ${assign.notes} "</p>` : ''}
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] text-amber-400/60 pt-1">
+                        <span><i class="fa-regular fa-clock"></i> Thời gian nộp: ${assign.date}</span>
+                        <span class="text-emerald-400 font-semibold"><i class="fa-solid fa-circle-check"></i> Đã nộp thành công</span>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function renderAnnouncements() {
+            const grid = document.getElementById('announcements-grid');
+            grid.innerHTML = '';
+
+            const sorted = [...state.announcements].sort((a, b) => b.pinned - a.pinned);
+
+            sorted.forEach(ann => {
+                const card = document.createElement('div');
+                card.className = `parchment-card p-5 rounded-xl space-y-3 relative ${ann.pinned ? 'border-amber-600 border-4 shadow-xl' : ''}`;
+                card.innerHTML = `
+                    ${ann.pinned ? `<div class="absolute -top-3 left-4 bg-red-800 text-amber-100 text-[10px] font-bold uppercase px-2 py-0.5 rounded shadow"><i class="fa-solid fa-thumbtack"></i> Đã Ghim</div>` : ''}
+                    <div class="flex justify-between items-start gap-2">
+                        <h3 class="font-medieval text-xl text-amber-950 ${ann.pinned ? 'mt-1' : ''}">${ann.title}</h3>
+                        <button onclick="deleteAnnouncement('${ann.id}')" title="Xóa thông báo" class="text-amber-900 hover:text-red-700">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                    <p class="text-sm text-amber-950 whitespace-pre-line font-sans">${ann.content}</p>
+                    <div class="pt-3 border-t border-amber-900/20 flex justify-between items-center text-xs text-amber-900/80 font-semibold font-cinzel">
+                        <span><i class="fa-solid fa-user"></i> Người đăng: ${ann.author}</span>
+                        <span><i class="fa-regular fa-calendar-days"></i> ${ann.date}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function populateMemberDropdowns() {
+            const assignMemberSelect = document.getElementById('assign-member');
+            const filterMemberSelect = document.getElementById('filter-assignment-member');
+            const annAuthorSelect = document.getElementById('ann-author');
+
+            const curAssign = assignMemberSelect.value;
+            const curFilter = filterMemberSelect.value;
+            const curAnn = annAuthorSelect.value;
+
+            assignMemberSelect.innerHTML = '<option value="">-- Chọn tên của bạn --</option>';
+            filterMemberSelect.innerHTML = '<option value="ALL">Tất cả thành viên</option>';
+            annAuthorSelect.innerHTML = '';
+
+            state.members.forEach(m => {
+                assignMemberSelect.innerHTML += `<option value="${m.name}">${m.name} (${m.role})</option>`;
+                filterMemberSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`;
+                annAuthorSelect.innerHTML += `<option value="${m.name}">${m.name}</option>`;
+            });
+
+            assignMemberSelect.value = curAssign;
+            filterMemberSelect.value = curFilter;
+            annAuthorSelect.value = curAnn;
+        }
+
+        function toggleSubmissionInput() {
+            const type = document.getElementById('assign-type').value;
+            const linkBox = document.getElementById('assign-link-container');
+            const fileBox = document.getElementById('assign-file-container');
+
+            if (type === 'link') {
+                linkBox.classList.remove('hidden');
+                fileBox.classList.add('hidden');
+                document.getElementById('assign-link').setAttribute('required', 'true');
+            } else {
+                linkBox.classList.add('hidden');
+                fileBox.classList.remove('hidden');
+                document.getElementById('assign-link').removeAttribute('required');
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('assign-file-name').value = file.name;
+            }
+        }
+
+        function openModal(id) {
+            playAudioEffect('click');
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function handleAddMember(e) {
+            e.preventDefault();
+            const name = document.getElementById('member-name').value.trim();
+            const role = document.getElementById('member-role').value;
+            const avatar = document.getElementById('member-avatar').value.trim();
+            const quote = document.getElementById('member-quote').value.trim();
+
+            const newMember = {
+                id: 'm_' + Date.now(),
+                name,
+                role,
+                avatar,
+                quote
+            };
+
+            state.members.push(newMember);
+            saveState();
+            renderMembers();
+            closeModal('member-modal');
+            playAudioEffect('success');
+            e.target.reset();
+        }
+
+        function deleteMember(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi Nhóm Bar?')) {
+                state.members = state.members.filter(m => m.id !== id);
+                saveState();
+                renderMembers();
+                playAudioEffect('click');
+            }
+        }
+
+        function handleAddDoc(e) {
+            e.preventDefault();
+            const title = document.getElementById('doc-title').value.trim();
+            const desc = document.getElementById('doc-desc').value.trim();
+            const link = document.getElementById('doc-link').value.trim();
+            const category = document.getElementById('doc-category').value;
+
+            const newDoc = {
+                id: 'd_' + Date.now(),
+                title,
+                desc,
+                link,
+                category
+            };
+
+            state.docs.push(newDoc);
+            saveState();
+            renderDocs();
+            closeModal('doc-modal');
+            playAudioEffect('success');
+            e.target.reset();
+        }
+
+        function deleteDoc(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa tài liệu này?')) {
+                state.docs = state.docs.filter(d => d.id !== id);
+                saveState();
+                renderDocs();
+                playAudioEffect('click');
+            }
+        }
+
+        function handleAssignmentSubmit(e) {
+            e.preventDefault();
+            const memberName = document.getElementById('assign-member').value;
+            const title = document.getElementById('assign-title').value.trim();
+            const type = document.getElementById('assign-type').value;
+            const link = document.getElementById('assign-link').value.trim();
+            const fileName = document.getElementById('assign-file-name').value.trim();
+            const notes = document.getElementById('assign-notes').value.trim();
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            const newAssign = {
+                id: 'a_' + Date.now(),
+                memberName,
+                title,
+                type,
+                link,
+                fileName,
+                notes,
+                date: dateStr
+            };
+
+            state.assignments.unshift(newAssign);
+            saveState();
+            renderAssignments();
+            playAudioEffect('success');
+            e.target.reset();
+            toggleSubmissionInput();
+        }
+
+        function deleteAssignment(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa bài nộp này?')) {
+                state.assignments = state.assignments.filter(a => a.id !== id);
+                saveState();
+                renderAssignments();
+                playAudioEffect('click');
+            }
+        }
+
+        function handleAddAnnouncement(e) {
+            e.preventDefault();
+            const title = document.getElementById('ann-title').value.trim();
+            const author = document.getElementById('ann-author').value;
+            const content = document.getElementById('ann-content').value.trim();
+            const pinned = document.getElementById('ann-pinned').checked;
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            const newAnn = {
+                id: 'an_' + Date.now(),
+                title,
+                author,
+                content,
+                pinned,
+                date: dateStr
+            };
+
+            state.announcements.unshift(newAnn);
+            saveState();
+            renderAnnouncements();
+            closeModal('announcement-modal');
+            playAudioEffect('success');
+            e.target.reset();
+        }
+
+        function deleteAnnouncement(id) {
+            if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
+                state.announcements = state.announcements.filter(a => a.id !== id);
+                saveState();
+                renderAnnouncements();
+                playAudioEffect('click');
+            }
+        }
+
+        window.onload = function() {
+            renderHomeDashboard();
+            renderMembers();
+            renderDocs();
+            renderAssignments();
+            renderAnnouncements();
+        };
+    </script>
+</body>
+</html>
