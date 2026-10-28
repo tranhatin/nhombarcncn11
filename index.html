@@ -479,7 +479,7 @@
     <footer class="wooden-panel border-t-4 border-tavern-woodLight py-6 mt-12 text-center text-xs text-amber-400/60">
         <div class="max-w-7xl mx-auto px-4 space-y-2">
             <p class="font-medieval text-lg text-tavern-gold font-bold">NHÓM BAR - HỌC TẬP & PHÁT TRIỂN</p>
-            <p>© 2026 Môn Công Nghệ Công Nghiệp 11 - Dữ liệu tự động lưu trên LocalStorage.</p>
+            <p>© 2026 Môn Công Nghệ Công Nghiệp 11 - Dữ liệu được đồng bộ trực tuyến qua Supabase (LocalStorage chỉ dùng làm bản đệm).</p>
         </div>
     </footer>
 
@@ -612,7 +612,6 @@
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_jbqjwZdstVMPM8FcKlq1FQ_xT5JFt4O';
         const SUPABASE_BUCKET = 'assignments';
         const SUPABASE_TABLE = 'assignments';
-        const CLOUD_COLLECTIONS = ['members', 'docs', 'announcements'];
         const sbHeaders = () => ({
             'apikey': SUPABASE_PUBLISHABLE_KEY,
             'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
@@ -628,7 +627,13 @@
                 throw new Error(`Supabase (${response.status}): ${detail}`);
             }
             if (response.status === 204) return null;
-            return response.json();
+            const responseText = await response.text();
+            if (!responseText || !responseText.trim()) return null;
+            try {
+                return JSON.parse(responseText);
+            } catch (parseError) {
+                throw new Error(`Supabase trả về dữ liệu không phải JSON hợp lệ: ${responseText.slice(0, 250)}`);
+            }
         }
         function showCloudError(message) {
             console.error(message);
@@ -647,9 +652,8 @@
                 renderHomeDashboard();
             } catch (error) { showCloudError(error.message); }
         }
-
-        // Đồng bộ thành viên, tài liệu và thông báo qua Supabase.
-        // Nếu bảng trực tuyến chưa có dữ liệu, dùng dữ liệu hiện có trên máy đầu tiên để khởi tạo.
+        // Đồng bộ danh sách thành viên, tài liệu và thông báo lên Supabase.
+        const CLOUD_COLLECTIONS = ['members', 'docs', 'announcements'];
         const collectionConfig = {
             members: {
                 toRow: x => ({ id: String(x.id), name: x.name || '', role: x.role || '', avatar: x.avatar || '', quote: x.quote || '' }),
@@ -664,38 +668,43 @@
                 fromRow: x => ({ id: String(x.id), title: x.title || '', author: x.author || '', content: x.content || '', pinned: !!x.pinned, date: x.date || '' })
             }
         };
-        async function loadCloudCollection(table, quiet = false) {
+
+        async function loadCloudCollection(table) {
             try {
                 let rows = await sbRequest(`/rest/v1/${table}?select=*`);
-                if (!rows.length && state[table].length) {
-                    const seedRows = state[table].map(collectionConfig[table].toRow);
+                rows = Array.isArray(rows) ? rows : [];
+                // Nếu bảng trực tuyến còn trống, đưa dữ liệu hiện có từ trình duyệt này lên lần đầu.
+                if (rows.length === 0 && Array.isArray(state[table]) && state[table].length > 0) {
                     await sbRequest(`/rest/v1/${table}`, {
                         method: 'POST',
                         headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-                        body: JSON.stringify(seedRows)
+                        body: JSON.stringify(state[table].map(collectionConfig[table].toRow))
                     });
                     rows = await sbRequest(`/rest/v1/${table}?select=*`);
+                    rows = Array.isArray(rows) ? rows : [];
                 }
-                if (rows.length || !state[table].length) {
+                if (rows.length > 0 || !state[table].length) {
                     state[table] = rows.map(collectionConfig[table].fromRow);
                     localStorage.setItem(`bar_${table}`, JSON.stringify(state[table]));
                 }
                 if (table === 'members') renderMembers();
-                if (table === 'docs') renderDocs();
-                if (table === 'announcements') renderAnnouncements();
+                else if (table === 'docs') renderDocs();
+                else if (table === 'announcements') renderAnnouncements();
                 renderHomeDashboard();
             } catch (error) {
-                console.error(`Không tải được bảng ${table}:`, error);
-                if (!quiet) console.warn(`Đang giữ dữ liệu cục bộ cho ${table}. Hãy chạy file SQL thiết lập Supabase.`);
+                console.error(`Không đồng bộ được bảng ${table}:`, error);
+                showCloudError(`Bảng ${table}: ${error.message}`);
             }
         }
+
         async function loadCloudCollections() {
-            await Promise.all(CLOUD_COLLECTIONS.map(table => loadCloudCollection(table, true)));
+            await Promise.all(CLOUD_COLLECTIONS.map(table => loadCloudCollection(table)));
         }
+
         async function syncCollectionsToCloud() {
             for (const table of CLOUD_COLLECTIONS) {
                 const rows = state[table].map(collectionConfig[table].toRow);
-                if (!rows.length) continue;
+                if (rows.length === 0) continue;
                 await sbRequest(`/rest/v1/${table}`, {
                     method: 'POST',
                     headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
@@ -703,13 +712,15 @@
                 });
             }
         }
+
         async function deleteCloudRecord(table, id) {
             try {
                 await sbRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(String(id))}`, { method: 'DELETE' });
             } catch (error) {
-                showCloudError(error.message);
+                showCloudError(`Không xóa được dữ liệu trong bảng ${table}: ${error.message}`);
             }
         }
+
         async function uploadAssignmentFile(file) {
             if (!file) return { fileName: '', fileUrl: '' };
             const maxBytes = 10 * 1024 * 1024;
@@ -809,7 +820,6 @@
         }
 
         function saveState() {
-            // Giữ bản đệm trên trình duyệt, đồng thời đồng bộ danh sách chung lên Supabase.
             localStorage.setItem('bar_members', JSON.stringify(state.members));
             localStorage.setItem('bar_docs', JSON.stringify(state.docs));
             localStorage.setItem('bar_assignments', JSON.stringify(state.assignments));
