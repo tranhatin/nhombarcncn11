@@ -612,6 +612,7 @@
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_jbqjwZdstVMPM8FcKlq1FQ_xT5JFt4O';
         const SUPABASE_BUCKET = 'assignments';
         const SUPABASE_TABLE = 'assignments';
+        const CLOUD_COLLECTIONS = ['members', 'docs', 'announcements'];
         const sbHeaders = () => ({
             'apikey': SUPABASE_PUBLISHABLE_KEY,
             'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
@@ -645,6 +646,69 @@
                 renderAssignments();
                 renderHomeDashboard();
             } catch (error) { showCloudError(error.message); }
+        }
+
+        // Đồng bộ thành viên, tài liệu và thông báo qua Supabase.
+        // Nếu bảng trực tuyến chưa có dữ liệu, dùng dữ liệu hiện có trên máy đầu tiên để khởi tạo.
+        const collectionConfig = {
+            members: {
+                toRow: x => ({ id: String(x.id), name: x.name || '', role: x.role || '', avatar: x.avatar || '', quote: x.quote || '' }),
+                fromRow: x => ({ id: String(x.id), name: x.name || '', role: x.role || '', avatar: x.avatar || '', quote: x.quote || '' })
+            },
+            docs: {
+                toRow: x => ({ id: String(x.id), title: x.title || '', category: x.category || '', desc: x.desc || '', link: x.link || '' }),
+                fromRow: x => ({ id: String(x.id), title: x.title || '', category: x.category || '', desc: x.desc || '', link: x.link || '' })
+            },
+            announcements: {
+                toRow: x => ({ id: String(x.id), title: x.title || '', author: x.author || '', content: x.content || '', pinned: !!x.pinned, date: x.date || '' }),
+                fromRow: x => ({ id: String(x.id), title: x.title || '', author: x.author || '', content: x.content || '', pinned: !!x.pinned, date: x.date || '' })
+            }
+        };
+        async function loadCloudCollection(table, quiet = false) {
+            try {
+                let rows = await sbRequest(`/rest/v1/${table}?select=*`);
+                if (!rows.length && state[table].length) {
+                    const seedRows = state[table].map(collectionConfig[table].toRow);
+                    await sbRequest(`/rest/v1/${table}`, {
+                        method: 'POST',
+                        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+                        body: JSON.stringify(seedRows)
+                    });
+                    rows = await sbRequest(`/rest/v1/${table}?select=*`);
+                }
+                if (rows.length || !state[table].length) {
+                    state[table] = rows.map(collectionConfig[table].fromRow);
+                    localStorage.setItem(`bar_${table}`, JSON.stringify(state[table]));
+                }
+                if (table === 'members') renderMembers();
+                if (table === 'docs') renderDocs();
+                if (table === 'announcements') renderAnnouncements();
+                renderHomeDashboard();
+            } catch (error) {
+                console.error(`Không tải được bảng ${table}:`, error);
+                if (!quiet) console.warn(`Đang giữ dữ liệu cục bộ cho ${table}. Hãy chạy file SQL thiết lập Supabase.`);
+            }
+        }
+        async function loadCloudCollections() {
+            await Promise.all(CLOUD_COLLECTIONS.map(table => loadCloudCollection(table, true)));
+        }
+        async function syncCollectionsToCloud() {
+            for (const table of CLOUD_COLLECTIONS) {
+                const rows = state[table].map(collectionConfig[table].toRow);
+                if (!rows.length) continue;
+                await sbRequest(`/rest/v1/${table}`, {
+                    method: 'POST',
+                    headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+                    body: JSON.stringify(rows)
+                });
+            }
+        }
+        async function deleteCloudRecord(table, id) {
+            try {
+                await sbRequest(`/rest/v1/${table}?id=eq.${encodeURIComponent(String(id))}`, { method: 'DELETE' });
+            } catch (error) {
+                showCloudError(error.message);
+            }
         }
         async function uploadAssignmentFile(file) {
             if (!file) return { fileName: '', fileUrl: '' };
@@ -745,11 +809,13 @@
         }
 
         function saveState() {
+            // Giữ bản đệm trên trình duyệt, đồng thời đồng bộ danh sách chung lên Supabase.
             localStorage.setItem('bar_members', JSON.stringify(state.members));
             localStorage.setItem('bar_docs', JSON.stringify(state.docs));
             localStorage.setItem('bar_assignments', JSON.stringify(state.assignments));
             localStorage.setItem('bar_announcements', JSON.stringify(state.announcements));
             renderHomeDashboard();
+            syncCollectionsToCloud().catch(error => showCloudError(error.message));
         }
 
         function switchTab(tabName) {
@@ -1040,6 +1106,7 @@
         function deleteMember(id) {
             if (confirm('Bạn có chắc chắn muốn xóa thành viên này khỏi Nhóm Bar?')) {
                 state.members = state.members.filter(m => m.id !== id);
+                deleteCloudRecord('members', id);
                 saveState();
                 renderMembers();
                 playAudioEffect('click');
@@ -1072,6 +1139,7 @@
         function deleteDoc(id) {
             if (confirm('Bạn có chắc chắn muốn xóa tài liệu này?')) {
                 state.docs = state.docs.filter(d => d.id !== id);
+                deleteCloudRecord('docs', id);
                 saveState();
                 renderDocs();
                 playAudioEffect('click');
@@ -1151,6 +1219,7 @@
         function deleteAnnouncement(id) {
             if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
                 state.announcements = state.announcements.filter(a => a.id !== id);
+                deleteCloudRecord('announcements', id);
                 saveState();
                 renderAnnouncements();
                 playAudioEffect('click');
@@ -1164,6 +1233,7 @@
             renderAssignments();
             renderAnnouncements();
             loadCloudAssignments();
+            loadCloudCollections();
         };
     </script>
 </body>
