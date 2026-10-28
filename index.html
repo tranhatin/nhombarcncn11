@@ -607,6 +607,64 @@
     </div>
 
     <script>
+        // Supabase: dùng URL gốc của project, không thêm /rest/v1/
+        const SUPABASE_URL = 'https://dqvlqpwzenthndpyhcru.supabase.co';
+        const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_jbqjwZdstVMPM8FcKlq1FQ_xT5JFt4O';
+        const SUPABASE_BUCKET = 'assignments';
+        const SUPABASE_TABLE = 'assignments';
+        const sbHeaders = () => ({
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+            'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+            'Content-Type': 'application/json'
+        });
+        async function sbRequest(path, options = {}) {
+            const response = await fetch(`${SUPABASE_URL}${path}`, {
+                ...options,
+                headers: { ...sbHeaders(), ...(options.headers || {}) }
+            });
+            if (!response.ok) {
+                const detail = await response.text();
+                throw new Error(`Supabase (${response.status}): ${detail}`);
+            }
+            if (response.status === 204) return null;
+            return response.json();
+        }
+        function showCloudError(message) {
+            console.error(message);
+            alert('Chưa kết nối được với cơ sở dữ liệu trực tuyến. Hãy kiểm tra SQL/policy trong Supabase. Chi tiết: ' + message);
+        }
+        async function loadCloudAssignments() {
+            try {
+                const rows = await sbRequest('/rest/v1/assignments?select=*&order=created_at.desc');
+                state.assignments = rows.map(row => ({
+                    id: String(row.id), memberName: row.student_name || '', title: row.title || '',
+                    type: row.type || (row.file_url ? 'file' : 'link'), link: row.link || '',
+                    fileName: row.file_name || '', fileUrl: row.file_url || '', notes: row.notes || '',
+                    date: row.date || (row.created_at ? new Date(row.created_at).toLocaleString('vi-VN') : '')
+                }));
+                renderAssignments();
+                renderHomeDashboard();
+            } catch (error) { showCloudError(error.message); }
+        }
+        async function uploadAssignmentFile(file) {
+            if (!file) return { fileName: '', fileUrl: '' };
+            const maxBytes = 10 * 1024 * 1024;
+            if (file.size > maxBytes) throw new Error('File quá lớn. Vui lòng chọn file không quá 10 MB.');
+            const safeName = file.name.replace(/[^\w.()\-\u00C0-\u024F ]/g, '_');
+            const objectPath = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${safeName}`;
+            const uploadResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/${SUPABASE_BUCKET}/${encodeURIComponent(objectPath).replace(/%2F/g, '/')}`, {
+                method: 'POST',
+                headers: { 'apikey': SUPABASE_PUBLISHABLE_KEY, 'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, 'x-upsert': 'false', 'Content-Type': file.type || 'application/octet-stream' },
+                body: file
+            });
+            if (!uploadResponse.ok) throw new Error(`Tải file thất bại (${uploadResponse.status}): ${await uploadResponse.text()}`);
+            // URL ký hạn 7 ngày; storage.objects cần policy SELECT cho bucket này.
+            const signed = await sbRequest(`/storage/v1/object/sign/${SUPABASE_BUCKET}/${objectPath.split('/').map(encodeURIComponent).join('/')}`, {
+                method: 'POST', body: JSON.stringify({ expiresIn: 604800 })
+            });
+            return { fileName: file.name, fileUrl: signed.signedURL.startsWith('http') ? signed.signedURL : `${SUPABASE_URL}/storage/v1${signed.signedURL}` };
+        }
+
         const DEFAULT_MEMBERS = [
             { id: 'm1', name: 'Nguyễn Văn A', role: 'Trưởng Nhóm', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Arthur', quote: 'Đồng hành cùng Nhóm Bar đạt kết quả tốt nhất!' },
             { id: 'm2', name: 'Trần Thị B', role: 'Phó Nhóm', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=Ginevra', quote: 'Hỗ trợ kiểm tra các bản vẽ kỹ thuật.' },
@@ -848,7 +906,9 @@
                 const isLink = assign.type === 'link';
                 const submissionContent = isLink 
                     ? `<a href="${assign.link}" target="_blank" class="text-xs text-amber-400 hover:underline flex items-center gap-1"><i class="fa-solid fa-link"></i> ${assign.link}</a>`
-                    : `<span class="text-xs text-amber-300 flex items-center gap-1"><i class="fa-solid fa-file-arrow-down"></i> Tệp đính kèm: <strong>${assign.fileName || 'Tài liệu'}</strong></span>`;
+                    : (assign.fileUrl
+                        ? `<a href="${assign.fileUrl}" target="_blank" rel="noopener noreferrer" class="text-xs text-amber-300 hover:underline flex items-center gap-1"><i class="fa-solid fa-file-arrow-down"></i> Tải tệp: <strong>${assign.fileName || 'Tài liệu'}</strong></a>`
+                        : `<span class="text-xs text-amber-300 flex items-center gap-1"><i class="fa-solid fa-file-arrow-down"></i> Tệp đính kèm: <strong>${assign.fileName || 'Tài liệu'}</strong> (chưa có file trực tuyến)</span>`);
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start gap-2">
@@ -856,9 +916,7 @@
                             <span class="text-xs font-bold text-tavern-gold"><i class="fa-solid fa-user"></i> ${assign.memberName}</span>
                             <h4 class="font-bold text-base text-amber-100 font-cinzel">${assign.title}</h4>
                         </div>
-                        <button onclick="deleteAssignment('${assign.id}')" title="Xóa bài nộp" class="text-amber-500 hover:text-red-400">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
+
                     </div>
                     <div class="bg-tavern-dark/80 p-2.5 rounded border border-amber-900/40 space-y-1">
                         ${submissionContent}
@@ -1020,44 +1078,47 @@
             }
         }
 
-        function handleAssignmentSubmit(e) {
+        async function handleAssignmentSubmit(e) {
             e.preventDefault();
+            const form = e.target;
+            const submitButton = form.querySelector('button[type="submit"]');
             const memberName = document.getElementById('assign-member').value;
             const title = document.getElementById('assign-title').value.trim();
             const type = document.getElementById('assign-type').value;
             const link = document.getElementById('assign-link').value.trim();
-            const fileName = document.getElementById('assign-file-name').value.trim();
             const notes = document.getElementById('assign-notes').value.trim();
-
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-            const newAssign = {
-                id: 'a_' + Date.now(),
-                memberName,
-                title,
-                type,
-                link,
-                fileName,
-                notes,
-                date: dateStr
-            };
-
-            state.assignments.unshift(newAssign);
-            saveState();
-            renderAssignments();
-            playAudioEffect('success');
-            e.target.reset();
-            toggleSubmissionInput();
+            const selectedFile = document.getElementById('assign-file-input').files[0];
+            if (type === 'file' && !selectedFile) {
+                alert('Bạn hãy chọn file thật để tải lên. Chỉ nhập tên file sẽ không gửi được tệp.');
+                return;
+            }
+            if (type === 'link' && !link) { alert('Vui lòng nhập link bài làm.'); return; }
+            submitButton.disabled = true;
+            const oldButton = submitButton.innerHTML;
+            submitButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+            try {
+                let uploaded = { fileName: '', fileUrl: '' };
+                if (type === 'file') uploaded = await uploadAssignmentFile(selectedFile);
+                const dateStr = new Date().toLocaleString('sv-SE').slice(0,16);
+                const payload = {
+                    student_name: memberName, title, type, link: type === 'link' ? link : '',
+                    file_name: uploaded.fileName, file_url: uploaded.fileUrl, notes, date: dateStr
+                };
+                const inserted = await sbRequest('/rest/v1/assignments?select=*', {
+                    method: 'POST', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(payload)
+                });
+                const row = inserted[0] || payload;
+                state.assignments.unshift({ id: String(row.id || Date.now()), memberName, title, type, link: payload.link,
+                    fileName: uploaded.fileName, fileUrl: uploaded.fileUrl, notes, date: dateStr });
+                renderAssignments(); renderHomeDashboard();
+                playAudioEffect('success'); form.reset(); toggleSubmissionInput();
+                alert('Đã gửi bài lên website thành công!');
+            } catch (error) { showCloudError(error.message); }
+            finally { submitButton.disabled = false; submitButton.innerHTML = oldButton; }
         }
 
         function deleteAssignment(id) {
-            if (confirm('Bạn có chắc chắn muốn xóa bài nộp này?')) {
-                state.assignments = state.assignments.filter(a => a.id !== id);
-                saveState();
-                renderAssignments();
-                playAudioEffect('click');
-            }
+            alert('Chức năng xóa bài nộp đã khóa để bảo vệ dữ liệu chung. Nhờ quản trị viên xóa trong Supabase nếu cần.');
         }
 
         function handleAddAnnouncement(e) {
@@ -1102,6 +1163,7 @@
             renderDocs();
             renderAssignments();
             renderAnnouncements();
+            loadCloudAssignments();
         };
     </script>
 </body>
